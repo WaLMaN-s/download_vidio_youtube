@@ -4,6 +4,42 @@ import subprocess
 import sys
 import re
 import os
+import time
+
+# =============================
+# BANNER HACKER STYLE
+# =============================
+def banner():
+    print(r"""
+┌──────────────────────────────────────────────────────────────┐
+│                                                              │
+│        ███╗   ██╗██╗   ██╗████████╗██╗   ██╗██████╗           │
+│        ████╗  ██║██║   ██║╚══██╔══╝██║   ██║██╔══██╗          │
+│        ██╔██╗ ██║██║   ██║   ██║   ██║   ██║██████╔╝          │
+│        ██║╚██╗██║██║   ██║   ██║   ██║   ██║██╔══██╗          │
+│        ██║ ╚████║╚██████╔╝   ██║   ╚██████╔╝██████╔╝          │
+│        ╚═╝  ╚═══╝ ╚═════╝    ╚═╝    ╚═════╝ ╚═════╝           │
+│                                                              │
+│                 Y O U T U B E   T O O L                       │
+│                                                              │
+│   [✓] Download Video Full                                    │
+│   [✓] Cut Video by Time (mm:ss)                              │
+│   [✓] Auto Merge Audio + Video (ffmpeg)                      │
+│                                                              │
+│   Author : Walman SS                                         │
+│   Mode   : CLI Terminal Tool                                 │
+│                                                              │
+│   Gunakan dengan bijak, jangan reupload konten orang lain ⚠  │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+    """)
+
+def loading():
+    print("⏳ Menyiapkan tools", end="")
+    for _ in range(3):
+        time.sleep(0.5)
+        print(".", end="")
+    print("\n")
 
 # =============================
 # UTIL
@@ -12,6 +48,7 @@ def cek_dep():
     for cmd in ["yt-dlp", "ffmpeg"]:
         if shutil.which(cmd) is None:
             print(f"❌ {cmd} tidak ditemukan di PATH")
+            print("👉 Pastikan yt-dlp & ffmpeg sudah terinstall dan ada di PATH")
             sys.exit(1)
 
 def valid_time(t):
@@ -24,7 +61,6 @@ def safe_filename(name):
     return re.sub(r'[\\/:*?"<>|]', '', name)
 
 def pilih_folder():
-    """Meminta user memilih folder penyimpanan"""
     print("\n📁 PILIH LOKASI PENYIMPANAN:")
     print("1️⃣  Folder saat ini")
     print("2️⃣  Pilih folder lain")
@@ -37,21 +73,17 @@ def pilih_folder():
         return folder
     elif pilih == "2":
         folder = input("\n📂 Masukkan path folder (contoh: C:/Downloads atau /home/user/Videos): ").strip()
-        
-        # Bersihkan tanda kutip jika ada
         folder = folder.strip('"').strip("'")
         
-        # Cek apakah folder ada
         if not os.path.exists(folder):
-            print(f"\n⚠️  Folder tidak ditemukan. Buat folder baru? (y/n): ", end="")
-            buat = input().strip().lower()
+            buat = input("\n⚠️  Folder tidak ditemukan. Buat folder baru? (y/n): ").strip().lower()
             if buat == 'y':
                 try:
                     os.makedirs(folder, exist_ok=True)
                     print(f"✅ Folder berhasil dibuat: {folder}")
                 except Exception as e:
                     print(f"❌ Gagal membuat folder: {e}")
-                    print("📁 Menggunakan folder saat ini sebagai gantinya")
+                    print("📁 Menggunakan folder saat ini")
                     folder = os.getcwd()
             else:
                 print("📁 Menggunakan folder saat ini")
@@ -81,7 +113,6 @@ def get_video_info(url):
 # DOWNLOAD
 # =============================
 def download_full(url, title, folder):
-    """Download video dengan kualitas tertinggi"""
     output_path = os.path.join(folder, f'{title}.%(ext)s')
     ydl_opts = {
         'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
@@ -94,7 +125,6 @@ def download_full(url, title, folder):
     return os.path.join(folder, f'{title}.mp4')
 
 def download_clip(url, title, start, end, folder):
-    """Download hanya bagian video yang diperlukan (lebih cepat)"""
     output_path = os.path.join(folder, f'TEMP_{title}.%(ext)s')
     ydl_opts = {
         'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
@@ -111,7 +141,6 @@ def download_clip(url, title, start, end, folder):
 # CUT VIDEO
 # =============================
 def cut_video(input_file, start, end, output_file):
-    """Potong video dengan ffmpeg"""
     cmd = [
         "ffmpeg", "-y",
         "-ss", start,
@@ -127,7 +156,6 @@ def cut_video(input_file, start, end, output_file):
     subprocess.run(cmd, check=True)
 
 def time_to_seconds(time_str):
-    """Konversi mm:ss ke detik"""
     parts = time_str.split(':')
     return int(parts[0]) * 60 + int(parts[1])
 
@@ -135,6 +163,8 @@ def time_to_seconds(time_str):
 # MAIN
 # =============================
 if __name__ == "__main__":
+    banner()
+    loading()
     cek_dep()
     
     url = input("🔗 Masukkan URL YouTube: ").strip()
@@ -144,7 +174,6 @@ if __name__ == "__main__":
     print("\n📺 Judul  :", title)
     print("⏱ Durasi :", sec_to_mmss(duration), "(mm:ss)\n")
     
-    # Pilih folder penyimpanan
     folder_tujuan = pilih_folder()
     
     print("\nPILIH MENU:")
@@ -154,7 +183,7 @@ if __name__ == "__main__":
     pilihan = input("\nMasukkan pilihan (1/2): ").strip()
     
     if pilihan == "1":
-        print("\n⬇  Mendownload video dengan kualitas tertinggi...")
+        print("\n⬇  Mendownload video kualitas tertinggi...")
         output_file = download_full(url, title, folder_tujuan)
         print("\n✅ Selesai!")
         print(f"📁 File: {output_file}")
@@ -167,7 +196,6 @@ if __name__ == "__main__":
             print("❌ Format waktu salah! Gunakan mm:ss")
             sys.exit(1)
         
-        # Validasi waktu tidak melebihi durasi video
         start_sec = time_to_seconds(start)
         end_sec = time_to_seconds(end)
         
@@ -180,16 +208,14 @@ if __name__ == "__main__":
             sys.exit(1)
         
         print("\n⬇  Mendownload bagian video yang diperlukan...")
-        print("💡 Ini lebih cepat karena tidak download seluruh video")
+        print("💡 Lebih cepat karena tidak download full video")
         
-        # Download hanya bagian yang diperlukan
         temp_file = download_clip(url, title, start_sec, end_sec, folder_tujuan)
         
         print("✂  Memproses video...")
         output_file = os.path.join(folder_tujuan, f"CLIP_{title}.mp4")
         cut_video(temp_file, "00:00", end, output_file)
         
-        # Hapus file temporary
         try:
             os.remove(temp_file)
         except:
